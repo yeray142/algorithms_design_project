@@ -37,6 +37,7 @@ void DijkstraQueue(CGraph& graph, CVertex *pStart)
         vertex.m_DijkstraVisit = false;
     }
     pStart->m_DijkstraDistance = 0;
+    pStart->m_pDijkstraPrevious = NULL;
 
     // Posar a la cua el “vèrtex” start
     priority_queue<Vertex, vector<Vertex>, comparator> queue;
@@ -62,6 +63,7 @@ void DijkstraQueue(CGraph& graph, CVertex *pStart)
                 double new_distance = pva->m_DijkstraDistance + e->m_Length;
                 if (v->m_DijkstraDistance > new_distance) {
                     v->m_DijkstraDistance = new_distance;
+                    v->m_pDijkstraPrevious = e;
                     queue.push(Vertex(v, new_distance));
                 }
             }
