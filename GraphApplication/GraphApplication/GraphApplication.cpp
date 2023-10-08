@@ -24,9 +24,9 @@ CString ApellidosAlumno1 = "Cordero Carrasco";
 CString NIUAlumno1 = "1599053"; // NIU alumno1
 
 // No rellenar en caso de grupo de un alumno
-CString NombreAlumno2 = "nombre del alumno 2";
-CString ApellidosAlumno2 = "apellidos del alumno 2";
-CString NIUAlumno2 = ""; // NIU alumno2
+CString NombreAlumno2 = "Laia";
+CString ApellidosAlumno2 = "Rubio Castro";
+CString NIUAlumno2 = "1600830"; // NIU alumno2
 
 bool CheckNIU(const char* niu)
 {
