@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title> Informe de correcció QUICKHULL</title>
+<link rel="stylesheet" href="CorrectionStyles.css">
+<link href="https://fonts.cdnfonts.com/css/neue-haas-grotesk-display-pro" rel="stylesheet">
+<link rel="shortcut icon" href="https://www.uab.cat/Xcelerate/WAI/img/simbol.png">
+</head>
+<body>
+<div class="capcal-nav portada">
+<div class="logo-uab">
+<h1>
+<a href="https://www.uab.cat/web/universitat-autonoma-de-barcelona-1345467950436.html">Universitat Autónoma de Barcelona</a>
+</h1>
+</div>
+</div>
+<div class="menu">
+<div class="izquierda">
+<h1>Informe de correcció QUICKHULL</h1>
+<p><span>Assignatura:</span>Anàlisis i Diseny d'Algorismes (ADA) </p>
+<h3>Demanat per:</h3>
+<ul>
+<li>1599053 CORDERO CARRASCO, Yeray Yeray.Cordero@autonoma.cat</li>
+</ul>
+</div>
+<div class="derecha">
+<p style="margin-top: 25px;"><span>Data:</span>Thu Oct 19 23:48:46 2023
+</p>
+<p style="margin-top: 25px;"><span>Corrector:</span>QUICKHULL (QUICKHULL)</p>
+<h3>Autors:</h3>
+<ul>
+<li>1599053 CORDERO CARRASCO, Yeray Yeray.Cordero@autonoma.cat</li>
+<li>1600830 RUBIO CASTRO, Laia Laia.RubioC@autonoma.cat</li>
+</ul>
+</div>
+</div>
+<div class="resultado">
+<p><span>Algorisme quick hull </span><span id="nota">6.3</span></p>
+<script>
+const notas = document.querySelectorAll("#nota");
+notas.forEach(nota => {
+const valor = parseInt(nota.textContent);
+if (valor >= 5) {
+nota.style.color = "green";
+} else {
+nota.style.color = "red";
+}
+});
+</script>
+</div>
+<div class="fitxersEnviatsAlServidor">
+<h3>Fitxers enviats al servidor:</h3><ul><li>x64\Release\GraphApplication.exe</li>
+<li>GraphApplication\GraphApplication.cpp</li>
+<li>GraphApplication\Graph.h</li>
+<li>GraphApplication\ConvexHull.cpp</li>
+</ul>
+</div>
+<div class="descripcioDeLaCorreccio">
+<h3>Descripció de la correcció</h3>
+<BR>
+</div>
+<div class="listaPruebas">
+<h3>Filtres de proves:</h3>
+<button class="boton" data-propiedad="correcta" onclick="toggleVisibility(this)" role="button">Correctes</button>
+<button class="boton" data-propiedad="incorrecta" onclick ="toggleVisibility(this)" role="button">Incorrectes</button>
+<script>
+function toggleVisibility(button) {
+var elementos = document.getElementsByClassName('elemento');
+var botones = document.getElementsByTagName('button');
+button.classList.toggle('active');
+var botonesActivos = [];
+for (var i = 0; i < botones.length; i++) {
+if (botones[i].classList.contains('active')) {
+botonesActivos.push(botones[i]);
+}
+}
+for (var i = 0; i < elementos.length; i++) {
+var propiedades = elementos[i].getAttribute('data-propiedades').split(' ');
+var mostrar = true;
+for (var j = 0; j < botonesActivos.length; j++) {
+var propiedadBoton = botonesActivos[j].getAttribute('data-propiedad');
+if (propiedades.includes(propiedadBoton)) {
+mostrar = false;
+break;
+}
+}
+elementos[i].hidden = !mostrar;
+}
+}
+</script>
+<h3>Llista de proves:</h3>
+<ul>
+<li class="elemento" data-propiedades="correcta  "><span class="tituloLista"><a href="#TEST_1">Prova Quick Hull Empty<span class = "descripcion">:</span></a></span><span class="correcto"> Correcte</span></li>
+<li class="elemento" data-propiedades="correcta  "><span class="tituloLista"><a href="#TEST_2">Prova Quick Hull One<span class = "descripcion">:</span></a></span><span class="correcto"> Correcte</span></li>
+<li class="elemento" data-propiedades="incorrecta  "><span class="tituloLista"><a href="#TEST_3">Prova Quick Hull superimposed<span class = "descripcion">:</span></a></span><span class="incorrecto"> Falla amb 1 errors</span></li>
+<li class="elemento" data-propiedades="correcta  "><span class="tituloLista"><a href="#TEST_4">Prova Quick Hull horizontal<span class = "descripcion">:</span></a></span><span class="correcto"> Correcte</span></li>
+<li class="elemento" data-propiedades="correcta  "><span class="tituloLista"><a href="#TEST_5">Prova Quick Hull vertical<span class = "descripcion">:</span></a></span><span class="correcto"> Correcte</span></li>
+<li class="elemento" data-propiedades="correcta  "><span class="tituloLista"><a href="#TEST_6">Prova Quick Hull graf10<span class = "descripcion">:</span></a></span><span class="correcto"> Correcte</span></li>
+<li class="elemento" data-propiedades="correcta  "><span class="tituloLista"><a href="#TEST_7">Prova Quick Hull Graf50<span class = "descripcion">:</span></a></span><span class="correcto"> Correcte</span></li>
+<li class="elemento" data-propiedades="correcta  "><span class="tituloLista"><a href="#TEST_8">Prova Quick Hull graf100<span class = "descripcion">:</span></a></span><span class="correcto"> Correcte</span></li>
+<li class="elemento" data-propiedades="correcta  "><span class="tituloLista"><a href="#TEST_9">Prova Quick Hull graf1000<span class = "descripcion">:</span></a></span><span class="correcto"> Correcte</span></li>
+<li class="elemento" data-propiedades="correcta  "><span class="tituloLista"><a href="#TEST_10">Prova Quick Hull Graf10000<span class = "descripcion">:</span></a></span><span class="correcto"> Correcte</span></li>
+</ul>
+<script>
+function mostrarElementos(clase) {
+var elementos = document.getElementsByClassName(clase);
+for (var i = 0; i < elementos.length; i++) {
+var liElemento = elementos[i].closest('li');
+var aDestino = liElemento.querySelector('a');
+var aReferencia = aDestino.href;
+var aSeccion = document.getElementsByName(aReferencia.split('#')[1]);
+var padre = aSeccion[0].parentNode;
+if (liElemento.style.display === 'none') {
+liElemento.style.display = 'list-item';
+padre.style.display = 'block';
+} else {
+liElemento.style.display = 'none';
+padre.style.display = 'none';
+}
+}
+}
+</script>
+</div>
+<div class="tests">
+<div class="test elemento" data-propiedades="correcta ">
+<hr>
+<a name="TEST_1">
+<h3>Prova Quick Hull Empty</h3>
+</a>
+<p> Fitxer del graf: TestQuickHull\Empty.GR<br>
+Fitxer envoltant mínima correcte: TestQuickHull\Empty.CH</p>
+<p> Temps de refèrencia: 3.2e-05seg.<br>
+Temps de execució máxim: 0.00032seg.<br>
+Nom Alumne 1.....: Yeray
+Cognoms Alumne 1.: Cordero Carrasco
+NIU Alumne 1.....: 1599053
+
+Nom Alumne 2.....: Laia
+Cognoms Alumne 2.: Rubio Castro
+NIU Alumne 2.....: 1600830
+
+NARGS 4
+PARAMETROS:
+Algoritmo....: QuickHull
+Grafo........: TestQuickHull\Empty.GR
+Convex Hull..: Outputs\Empty_QuickHull.CH
+Leer vertices
+Leer Aristas
+Fin lectura
+
+TIEMPO DE EJECUCION: 0.000028
+FIN EJECUCION COMANDOS
+Temps de execució de la prova: 2.8e-05seg.</P>
+<P><b>CONVEX HULL OK:</b> []</P>
+<P><b>CONVEX HULL PRACTICA:</b> []</P>
+
+ <b>CORRECTE</b>
+</div>
+<div class="test elemento" data-propiedades="correcta ">
+<hr>
+<a name="TEST_2">
+<h3>Prova Quick Hull One</h3>
+</a>
+<p> Fitxer del graf: TestQuickHull\One.GR<br>
+Fitxer envoltant mínima correcte: TestQuickHull\One.CH</p>
+<p> Temps de refèrencia: 1.1e-05seg.<br>
+Temps de execució máxim: 0.00011seg.<br>
+Nom Alumne 1.....: Yeray
+Cognoms Alumne 1.: Cordero Carrasco
+NIU Alumne 1.....: 1599053
+
+Nom Alumne 2.....: Laia
+Cognoms Alumne 2.: Rubio Castro
+NIU Alumne 2.....: 1600830
+
+NARGS 4
+PARAMETROS:
+Algoritmo....: QuickHull
+Grafo........: TestQuickHull\One.GR
+Convex Hull..: Outputs\One_QuickHull.CH
+Leer vertices
+Leer Aristas
+Fin lectura
+
+TIEMPO DE EJECUCION: 0.000012
+FIN EJECUCION COMANDOS
+Temps de execució de la prova: 1.2e-05seg.</P>
+<P><b>CONVEX HULL OK:</b> [V0001]</P>
+<P><b>CONVEX HULL PRACTICA:</b> [V0001]</P>
+
+ <b>CORRECTE</b>
+</div>
+<div class="test elemento" data-propiedades="incorrecta ">
+<hr>
+<a name="TEST_3">
+<h3>Prova Quick Hull superimposed</h3>
+</a>
+<p> Fitxer del graf: TestQuickHull\superimposed.GR<br>
+Fitxer envoltant mínima correcte: TestQuickHull\superimposed.CH</p>
+<p> Temps de refèrencia: 2.1e-05seg.<br>
+Temps de execució máxim: 0.00021seg.<br>
+Nom Alumne 1.....: Yeray
+Cognoms Alumne 1.: Cordero Carrasco
+NIU Alumne 1.....: 1599053
+
+Nom Alumne 2.....: Laia
+Cognoms Alumne 2.: Rubio Castro
+NIU Alumne 2.....: 1600830
+
+NARGS 4
+PARAMETROS:
+Algoritmo....: QuickHull
+Grafo........: TestQuickHull\superimposed.GR
+Convex Hull..: Outputs\superimposed_QuickHull.CH
+Leer vertices
+Leer Aristas
+Fin lectura
+
+TIEMPO DE EJECUCION: 0.000013
+FIN EJECUCION COMANDOS
+Temps de execució de la prova: 1.3e-05seg.</P>
+<P><b>CONVEX HULL OK:</b> [V0001]</P>
+<P><b>CONVEX HULL PRACTICA:</b> [V0001,V0002]</P>
+
+<b style="color: red; ">Falla amb 1 errors</b>
+<ul>
+<li>Vertex que sobra a l'envoltant convexa mínima V0002
+<dd>
+Vertex de més: VERTEX(V0002,(350, 400))
+</dd>
+</ul><br></div>
+<div class="test elemento" data-propiedades="correcta ">
+<hr>
+<a name="TEST_4">
+<h3>Prova Quick Hull horizontal</h3>
+</a>
+<p> Fitxer del graf: TestQuickHull\horizontal.GR<br>
+Fitxer envoltant mínima correcte: TestQuickHull\horizontal.CH</p>
+<p> Temps de refèrencia: 1.5e-05seg.<br>
+Temps de execució máxim: 0.00015seg.<br>
+Nom Alumne 1.....: Yeray
+Cognoms Alumne 1.: Cordero Carrasco
+NIU Alumne 1.....: 1599053
+
+Nom Alumne 2.....: Laia
+Cognoms Alumne 2.: Rubio Castro
+NIU Alumne 2.....: 1600830
+
+NARGS 4
+PARAMETROS:
+Algoritmo....: QuickHull
+Grafo........: TestQuickHull\horizontal.GR
+Convex Hull..: Outputs\horizontal_QuickHull.CH
+Leer vertices
+Leer Aristas
+Fin lectura
+
+TIEMPO DE EJECUCION: 0.000013
+FIN EJECUCION COMANDOS
+Temps de execució de la prova: 1.3e-05seg.</P>
+<P><b>CONVEX HULL OK:</b> [V0002,V0001]</P>
+<P><b>CONVEX HULL PRACTICA:</b> [V0002,V0001]</P>
+
+ <b>CORRECTE</b>
+</div>
+<div class="test elemento" data-propiedades="correcta ">
+<hr>
+<a name="TEST_5">
+<h3>Prova Quick Hull vertical</h3>
+</a>
+<p> Fitxer del graf: TestQuickHull\vertical.GR<br>
+Fitxer envoltant mínima correcte: TestQuickHull\vertical.CH</p>
+<p> Temps de refèrencia: 1.3e-05seg.<br>
+Temps de execució máxim: 0.00013seg.<br>
+Nom Alumne 1.....: Yeray
+Cognoms Alumne 1.: Cordero Carrasco
+NIU Alumne 1.....: 1599053
+
+Nom Alumne 2.....: Laia
+Cognoms Alumne 2.: Rubio Castro
+NIU Alumne 2.....: 1600830
+
+NARGS 4
+PARAMETROS:
+Algoritmo....: QuickHull
+Grafo........: TestQuickHull\vertical.GR
+Convex Hull..: Outputs\vertical_QuickHull.CH
+Leer vertices
+Leer Aristas
+Fin lectura
+
+TIEMPO DE EJECUCION: 0.000013
+FIN EJECUCION COMANDOS
+Temps de execució de la prova: 1.3e-05seg.</P>
+<P><b>CONVEX HULL OK:</b> [V0002,V0001]</P>
+<P><b>CONVEX HULL PRACTICA:</b> [V0001,V0002]</P>
+
+ <b>CORRECTE</b>
+</div>
+<div class="test elemento" data-propiedades="correcta ">
+<hr>
+<a name="TEST_6">
+<h3>Prova Quick Hull graf10</h3>
+</a>
+<p> Fitxer del graf: TestQuickHull\graf10.GR<br>
+Fitxer envoltant mínima correcte: TestQuickHull\graf10.CH</p>
+<p> Temps de refèrencia: 1.9e-05seg.<br>
+Temps de execució máxim: 0.00019seg.<br>
+Nom Alumne 1.....: Yeray
+Cognoms Alumne 1.: Cordero Carrasco
+NIU Alumne 1.....: 1599053
+
+Nom Alumne 2.....: Laia
+Cognoms Alumne 2.: Rubio Castro
+NIU Alumne 2.....: 1600830
+
+NARGS 4
+PARAMETROS:
+Algoritmo....: QuickHull
+Grafo........: TestQuickHull\graf10.GR
+Convex Hull..: Outputs\graf10_QuickHull.CH
+Leer vertices
+Leer Aristas
+Fin lectura
+
+TIEMPO DE EJECUCION: 0.000034
+FIN EJECUCION COMANDOS
+Temps de execució de la prova: 3.4e-05seg.</P>
+<P><b>CONVEX HULL OK:</b> [V0007,V0002,V0005,V0009,V0010,V0006]</P>
+<P><b>CONVEX HULL PRACTICA:</b> [V0007,V0002,V0005,V0009,V0010,V0006]</P>
+
+ <b>CORRECTE</b>
+</div>
+<div class="test elemento" data-propiedades="correcta ">
+<hr>
+<a name="TEST_7">
+<h3>Prova Quick Hull Graf50</h3>
+</a>
+<p> Fitxer del graf: TestQuickHull\Graf50.GR<br>
+Fitxer envoltant mínima correcte: TestQuickHull\Graf50.CH</p>
+<p> Temps de refèrencia: 5.2e-05seg.<br>
+Temps de execució máxim: 0.00052seg.<br>
+Nom Alumne 1.....: Yeray
+Cognoms Alumne 1.: Cordero Carrasco
+NIU Alumne 1.....: 1599053
+
+Nom Alumne 2.....: Laia
+Cognoms Alumne 2.: Rubio Castro
+NIU Alumne 2.....: 1600830
+
+NARGS 4
+PARAMETROS:
+Algoritmo....: QuickHull
+Grafo........: TestQuickHull\Graf50.GR
+Convex Hull..: Outputs\Graf50_QuickHull.CH
+Leer vertices
+Leer Aristas
+Fin lectura
+
+TIEMPO DE EJECUCION: 0.000034
+FIN EJECUCION COMANDOS
+Temps de execució de la prova: 3.4e-05seg.</P>
+<P><b>CONVEX HULL OK:</b> [V0008,V0002,V0029,V0024,V0006,V0026,V0020,V0025,V0018]</P>
+<P><b>CONVEX HULL PRACTICA:</b> [V0008,V0002,V0029,V0024,V0006,V0026,V0020,V0025,V0018]</P>
+
+ <b>CORRECTE</b>
+</div>
+<div class="test elemento" data-propiedades="correcta ">
+<hr>
+<a name="TEST_8">
+<h3>Prova Quick Hull graf100</h3>
+</a>
+<p> Fitxer del graf: TestQuickHull\graf100.GR<br>
+Fitxer envoltant mínima correcte: TestQuickHull\graf100.CH</p>
+<p> Temps de refèrencia: 4.9e-05seg.<br>
+Temps de execució máxim: 0.00049seg.<br>
+Nom Alumne 1.....: Yeray
+Cognoms Alumne 1.: Cordero Carrasco
+NIU Alumne 1.....: 1599053
+
+Nom Alumne 2.....: Laia
+Cognoms Alumne 2.: Rubio Castro
+NIU Alumne 2.....: 1600830
+
+NARGS 4
+PARAMETROS:
+Algoritmo....: QuickHull
+Grafo........: TestQuickHull\graf100.GR
+Convex Hull..: Outputs\graf100_QuickHull.CH
+Leer vertices
+Leer Aristas
+Fin lectura
+
+TIEMPO DE EJECUCION: 0.000049
+FIN EJECUCION COMANDOS
+Temps de execució de la prova: 4.9e-05seg.</P>
+<P><b>CONVEX HULL OK:</b> [V0011,V0054,V0053,V0098,V0009,V0013,V0066,V0010,V0008,V0021,V0052]</P>
+<P><b>CONVEX HULL PRACTICA:</b> [V0011,V0054,V0053,V0098,V0009,V0013,V0066,V0010,V0008,V0021,V0052]</P>
+
+ <b>CORRECTE</b>
+</div>
+<div class="test elemento" data-propiedades="correcta ">
+<hr>
+<a name="TEST_9">
+<h3>Prova Quick Hull graf1000</h3>
+</a>
+<p> Fitxer del graf: TestQuickHull\graf1000.GR<br>
+Fitxer envoltant mínima correcte: TestQuickHull\graf1000.CH</p>
+<p> Temps de refèrencia: 0.000309seg.<br>
+Temps de execució máxim: 0.00309seg.<br>
+Nom Alumne 1.....: Yeray
+Cognoms Alumne 1.: Cordero Carrasco
+NIU Alumne 1.....: 1599053
+
+Nom Alumne 2.....: Laia
+Cognoms Alumne 2.: Rubio Castro
+NIU Alumne 2.....: 1600830
+
+NARGS 4
+PARAMETROS:
+Algoritmo....: QuickHull
+Grafo........: TestQuickHull\graf1000.GR
+Convex Hull..: Outputs\graf1000_QuickHull.CH
+Leer vertices
+Leer Aristas
+Fin lectura
+
+TIEMPO DE EJECUCION: 0.000316
+FIN EJECUCION COMANDOS
+Temps de execució de la prova: 0.000316seg.</P>
+<P><b>CONVEX HULL OK:</b> [V0041,V0761,V0029,V0428,V0107,V0225,V0704,V0217,V0078,V0690,V0711,V0444,V0366,V0463,V0135,V0648,V0006,V0497,V0267,V0373,V0558,V0840]</P>
+<P><b>CONVEX HULL PRACTICA:</b> [V0041,V0761,V0029,V0428,V0107,V0225,V0704,V0217,V0078,V0690,V0711,V0444,V0366,V0463,V0135,V0648,V0006,V0497,V0267,V0373,V0558,V0840]</P>
+
+ <b>CORRECTE</b>
+</div>
+<div class="test elemento" data-propiedades="correcta ">
+<hr>
+<a name="TEST_10">
+<h3>Prova Quick Hull Graf10000</h3>
+</a>
+<p> Fitxer del graf: TestQuickHull\Graf10000.GR<br>
+Fitxer envoltant mínima correcte: TestQuickHull\Graf10000.CH</p>
+<p> Temps de refèrencia: 0.002214seg.<br>
+Temps de execució máxim: 0.02214seg.<br>
+Nom Alumne 1.....: Yeray
+Cognoms Alumne 1.: Cordero Carrasco
+NIU Alumne 1.....: 1599053
+
+Nom Alumne 2.....: Laia
+Cognoms Alumne 2.: Rubio Castro
+NIU Alumne 2.....: 1600830
+
+NARGS 4
+PARAMETROS:
+Algoritmo....: QuickHull
+Grafo........: TestQuickHull\Graf10000.GR
+Convex Hull..: Outputs\Graf10000_QuickHull.CH
+Leer vertices
+Leer Aristas
+Fin lectura
+
+TIEMPO DE EJECUCION: 0.002400
+FIN EJECUCION COMANDOS
+Temps de execució de la prova: 0.0024seg.</P>
+<P><b>CONVEX HULL OK:</b> [V0859,V9717,V1371,V6219,V8976,V8558,V9933]</P>
+<P><b>CONVEX HULL PRACTICA:</b> [V0859,V9717,V1371,V6219,V8976,V8558,V9933]</P>
+
+ <b>CORRECTE</b>
+</div>
+</div>
+<div class="pieDePagina">
+<div class="izquierda">
+<h3>Demanat per:</h3>
+<ul>
+<li>1599053 CORDERO CARRASCO, Yeray Yeray.Cordero@autonoma.cat</li>
+</ul>
+</div>
+<div class="derecha">
+<h3>Autors:</h3>
+<ul>
+<li>1599053 CORDERO CARRASCO, Yeray Yeray.Cordero@autonoma.cat</li>
+<li>1600830 RUBIO CASTRO, Laia Laia.RubioC@autonoma.cat</li>
+</ul>
+</div>
+</div>
+</body>
+</html>
