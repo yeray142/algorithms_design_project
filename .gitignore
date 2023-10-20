@@ -399,3 +399,4 @@ FodyWeavers.xsd
 GraphApplication/CorrectionClient.exe
 GraphApplication/CorrectionClient.ini
 GraphApplication/CorrectionStyles.css
+GraphApplication/*.htm
