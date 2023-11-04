@@ -16,49 +16,68 @@ CTrack SalesmanTrackBacktracking(CGraph& graph, CVisits& visits)
 // =============================================================================
 // SalesmanTrackBacktrackingGreedy =============================================
 // =============================================================================
-void BacktrackingGreedy(vector<vector<tuple<CTrack*, double>>>& visitsTracksMat, vector<bool>& inStackVec, int actVertex, vector<int>& stackTrack, vector<int>& optTrack, int nVertexToVisit, double& optDist, double& actDist)
-{
-	stackTrack.push_back(actVertex);
-	inStackVec[actVertex] = true;
+list<int> camiMesCurt;
+double longitudCamiMesCurt = numeric_limits<double>::max();
+double longitudCamiActual = 0;
 
-	if (stackTrack.size() == nVertexToVisit && stackTrack.back() == nVertexToVisit - 1)
-	{
-		if (actDist < optDist)
-		{
-			optTrack = stackTrack;
-			optDist = actDist;
-		}
+struct TrackNode {
+	int m_visita;
+	TrackNode* m_pAnterior;
+	int m_nNodes;
+};
+
+bool isVisited(const TrackNode* pAnterior, int visita) {
+	for (; pAnterior; pAnterior = pAnterior->m_pAnterior) {
+		if (pAnterior->m_visita == visita)
+			return true;
 	}
-	else {
-		for (int nextVertex = 0; nextVertex < nVertexToVisit; nextVertex++)
+	return false;
+}
+
+void BacktrackingGreedy(vector<vector<tuple<CTrack*, double>>>& visitsTracksMatrix, list<int>& visits, TrackNode* pAnterior, int pActual)
+{
+	// Si el cami ja conte totes les visites.
+	if (pAnterior->m_nNodes == visitsTracksMatrix.size() && pActual == visitsTracksMatrix.size() - 1)
+	{
+		// Actualitzar cami mes curt si l'actual es mes curt.
+		if (longitudCamiActual < longitudCamiMesCurt) 
 		{
-			if (!inStackVec[nextVertex])
-			{
-				actDist += get<1>(visitsTracksMat[actVertex][nextVertex]);
-				BacktrackingGreedy(visitsTracksMat, inStackVec, nextVertex, stackTrack, optTrack, nVertexToVisit, optDist, actDist);
+			camiMesCurt.clear();
+			while (pAnterior) {
+				camiMesCurt.push_front(pAnterior->m_visita);
+				pAnterior = pAnterior->m_pAnterior;
+			}
+			longitudCamiMesCurt = longitudCamiActual;
+		}
+		return;
+	}
+	else if (longitudCamiActual < longitudCamiMesCurt) 
+	{
+		TrackNode node;
+		node.m_pAnterior = pAnterior;
+		node.m_nNodes = pAnterior->m_nNodes;
+		for (int visitIndex : visits) {
+			if (!isVisited(pAnterior, visitIndex)) {
+				node.m_visita = visitIndex;
+				node.m_nNodes++;
+				longitudCamiActual += get<1>(visitsTracksMatrix[pAnterior->m_visita][visitIndex]);
+				BacktrackingGreedy(visitsTracksMatrix, visits, &node, visitIndex);
+				longitudCamiActual -= get<1>(visitsTracksMatrix[pAnterior->m_visita][visitIndex]);
+				node.m_nNodes--;
 			}
 		}
 	}
-
-	int popVertex = stackTrack.back();
-	stackTrack.pop_back();
-	inStackVec[popVertex] = false;
-
-	if (stackTrack.size() > 0) 
-		actDist -= get<1>(visitsTracksMat[popVertex][stackTrack.back()]);
-	else 
-		actDist = 0;
-
-	return;
 }
 
 CTrack SalesmanTrackBacktrackingGreedy(CGraph& graph, CVisits& visits)
 {
 	// Guardar en un array de dues dimensions tots els camins òptims entre vèrtexs a visitar.
 	vector<vector<tuple<CTrack*, double>>> visitsTracksMat(visits.GetNVertices(), vector<tuple<CTrack*, double>>(visits.GetNVertices(), {0, 0}));
+	list<int> visitsIndex;
 	
 	for (auto it_i = begin(visits.m_Vertices); it_i != end(visits.m_Vertices); it_i++) {
 		DijkstraQueue(graph, *it_i);
+		visitsIndex.push_back(distance(visits.m_Vertices.begin(), it_i));
 
 		for (auto it_j = begin(visits.m_Vertices); it_j != end(visits.m_Vertices); it_j++) {
 			CTrack* track = new CTrack(&graph);
@@ -74,21 +93,15 @@ CTrack SalesmanTrackBacktrackingGreedy(CGraph& graph, CVisits& visits)
 		}
 	}
 
-
-	int nVertexToVisit = visits.m_Vertices.size();
-	vector<int> stackTrack;
-	vector<bool> inStackMap(nVertexToVisit, false);
-	vector<int> optimousTrack;
-	int actVertex = 0;
-	double optimousDist = std::numeric_limits<double>::max();
-	double actDist = 0;
-	BacktrackingGreedy(visitsTracksMat, inStackMap, actVertex, stackTrack, optimousTrack, nVertexToVisit, optimousDist, actDist);
+	visitsIndex.pop_front();
+	TrackNode node = {0, NULL, 1};
+	BacktrackingGreedy(visitsTracksMat, visitsIndex, &node, 0);
 
 
 	CTrack resultTrack(&graph);
-	int dest = optimousTrack.front();
-	optimousTrack.erase(optimousTrack.begin());
-	for (int orig : optimousTrack) {
+	int dest = camiMesCurt.front();
+	camiMesCurt.erase(camiMesCurt.begin());
+	for (int orig : camiMesCurt) {
 		CTrack* t = get<0>(visitsTracksMat[dest][orig]);
 		resultTrack.Append(*t);
 		dest = orig;
