@@ -58,6 +58,9 @@ void BacktrackingGreedy(vector<vector<tuple<CTrack*, double>>>& visitsTracksMatr
 		node.m_nNodes = pAnterior->m_nNodes;
 		for (int visitIndex : visits) {
 			if (!isVisited(pAnterior, visitIndex)) {
+				if (visitIndex == visitsTracksMatrix.size() - 1 &&
+					node.m_nNodes < visitsTracksMatrix.size() - 1)
+					continue;
 				node.m_visita = visitIndex;
 				node.m_nNodes++;
 				longitudCamiActual += get<1>(visitsTracksMatrix[pAnterior->m_visita][visitIndex]);
