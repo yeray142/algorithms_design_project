@@ -304,6 +304,7 @@ public:
 	int m_KruskalDeep;
 	// Backtracking
 	bool m_VertexToVisit;
+	vector<int> m_Trams;
 	// Marcar
 	bool m_Marca;
 	// TrobaCami

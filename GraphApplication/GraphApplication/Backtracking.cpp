@@ -10,26 +10,29 @@
 
 CTrack CMesCurt(NULL);
 CVertex* pDest;
-CTrack CActual(NULL);
 
 double LongitudCMesCurt;
 double LongitudCActual;
 
-struct NodeCami {
+struct Node {
 	CEdge* m_pEdge;
-	NodeCami* m_pAnterior;
+	Node* m_pAnterior;
 };
 
-void BacktrackingPur(NodeCami* pAnterior, CVertex* pActual, set<CVertex*>& visitasIntermedias)
+bool everythingVisited(CVisits& visits) 
 {
-	// Si el nodo actual es una visita intermedia, lo eliminamos de la lista
-	if (visitasIntermedias.find(pActual) != visitasIntermedias.end()) {
-		visitasIntermedias.erase(pActual);
+	for (CVertex* pV : visits.m_Vertices) {
+		if (pV->m_VertexToVisit)
+			return false;
 	}
+	return true;
+}
 
-	if (pActual == pDest) {
+void BacktrackingPur(CVisits& visits, Node* pAnterior, CVertex* pActual, int& currentTram)
+{
+	if (pActual == pDest && everythingVisited(visits)) {
 		// Solo consideramos el camino si todas las visitas intermedias han sido visitadas
-		if (visitasIntermedias.empty() && LongitudCActual < LongitudCMesCurt) {
+		if (LongitudCActual < LongitudCMesCurt) {
 			CMesCurt.Clear();
 			while (pAnterior) {
 				CMesCurt.m_Edges.push_front(pAnterior->m_pEdge);
@@ -39,31 +42,56 @@ void BacktrackingPur(NodeCami* pAnterior, CVertex* pActual, set<CVertex*>& visit
 		}
 	}
 	else if (LongitudCActual < LongitudCMesCurt) {
-		pActual->m_JaHePassat = true;
-		NodeCami node;
+		Node node;
 		node.m_pAnterior = pAnterior;
+
 		for (CEdge* pE : pActual->m_Edges) {
-			if (!pE->m_pDestination->m_JaHePassat) {
+			if (!(find(pE->m_pDestination->m_Trams.begin(), pE->m_pDestination->m_Trams.end(), currentTram) != end(pE->m_pDestination->m_Trams))) {
+				
 				node.m_pEdge = pE;
+				bool vertexToVisit = pE->m_pDestination->m_VertexToVisit;
+				if (vertexToVisit) {
+					pE->m_pDestination->m_VertexToVisit = false;
+					currentTram++;
+				}
+				pE->m_pDestination->m_Trams.push_back(currentTram);
 				LongitudCActual += pE->m_Length;
+
 				// Pasamos la lista de visitas intermedias a la siguiente llamada recursiva
-				BacktrackingPur(&node, pE->m_pDestination, visitasIntermedias);
+				BacktrackingPur(visits, &node, pE->m_pDestination, currentTram);
+
 				LongitudCActual -= pE->m_Length;
+				pE->m_pDestination->m_Trams.pop_back();
+				if (vertexToVisit) {
+					pE->m_pDestination->m_VertexToVisit = true;
+					currentTram--;
+				}
 			}
 		}
-		pActual->m_JaHePassat = false;
-	}
-
-	// Si el nodo actual es una visita intermedia, lo añadimos de nuevo a la lista
-	if (visitasIntermedias.find(pActual) == visitasIntermedias.end()) {
-		visitasIntermedias.insert(pActual);
 	}
 }
 
 
 CTrack SalesmanTrackBacktracking(CGraph& graph, CVisits& visits) 
 {
-	return CTrack(&graph);
+	CMesCurt.SetGraph(&graph);
+	CMesCurt.Clear();
+
+	LongitudCMesCurt = numeric_limits<double>::max();
+	LongitudCActual = 0.0;
+	pDest = visits.m_Vertices.back();
+
+	for (CVertex& pV : graph.m_Vertices) {
+		pV.m_Trams.clear();
+		pV.m_VertexToVisit = false;
+	}
+	for (CVertex* pV : visits.m_Vertices) pV->m_VertexToVisit = true;
+
+	int currentTram = 0;
+	visits.m_Vertices.front()->m_VertexToVisit = false;
+	BacktrackingPur(visits, NULL, visits.m_Vertices.front(), currentTram);
+
+	return CMesCurt;
 }
 
 
