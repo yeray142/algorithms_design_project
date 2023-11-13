@@ -21,21 +21,27 @@ public:
 	int m_Visita;
 	double m_Length;
 
+	// Llista de vertexs a visitar.
 	set<int> m_ToVisit;
 
+	// Cotes superior i inferior.
 	double m_CotaInferior;
 	double m_CotaSuperior;
 
+	// Per alliberar memoria.
 	unsigned m_CntRef;
 
-	CBB2(int visita, double length)
+	// Constructor per al vertex inicial.
+	CBB2(int visita, double length, set<int>& toVisit)
 		: m_pFather(NULL)
 		, m_Length(length)
 		, m_Visita(visita)
 		, m_CntRef(1)
+		, m_ToVisit(toVisit)
 	{
 	}
 
+	// Constructor per a la resta de vertexs.
 	CBB2(CBB2* pFather, int visita, double length)
 		: m_pFather(pFather)
 		, m_Visita(visita)
@@ -48,6 +54,7 @@ public:
 		m_ToVisit.erase(visita);
 	}
 
+	// Allibera memoria.
 	void Unlink()
 	{
 		if (--m_CntRef == 0) {
@@ -63,11 +70,11 @@ struct comparatorCBB2 {
 	}
 };
 
-void createVisitsTracksMatrix(vector<vector<tuple<CTrack*, double>>>& visitsTracksMat, list<int>& visitsIndex, CGraph& graph, CVisits& visits)
+void createVisitsTracksMatrix(vector<vector<tuple<CTrack*, double>>>& visitsTracksMat, set<int>& visitsIndex, CGraph& graph, CVisits& visits)
 {
 	for (auto it_i = begin(visits.m_Vertices); it_i != end(visits.m_Vertices); it_i++)
 	{
-		visitsIndex.push_back(distance(visits.m_Vertices.begin(), it_i));
+		visitsIndex.insert(distance(visits.m_Vertices.begin(), it_i));
 		DijkstraQueue(graph, *it_i);
 
 		for (auto it_j = begin(visits.m_Vertices); it_j != end(visits.m_Vertices); it_j++) {
@@ -97,39 +104,20 @@ void createResultTrack(vector<vector<tuple<CTrack*, double>>>& visitsTracksMat, 
 	}
 }
 
-void getInitialMaxMinCVi(vector<vector<tuple<CTrack*, double>>>& visitsTracksMat, double& cotaSuperior, double& cotaInferior, set<int> toVisit) 
-{
-	cotaSuperior = 0.0;
-	cotaInferior = 0.0;
-
-	for (int v : toVisit) 
-	{
-		double cotaSuperiorAux = 0;
-		double cotaInferiorAux = numeric_limits<double>::max();
-		for (int i = 0; i < visitsTracksMat.size() - 1; i++) 
-		{
-			if (i == v)
-				continue;
-
-			double distance = get<1>(visitsTracksMat[i][v]);
-			if (distance < cotaInferiorAux) cotaInferiorAux = distance;
-			if (distance > cotaSuperiorAux) cotaSuperiorAux = distance;
-		}
-		cotaSuperior += cotaSuperiorAux;
-		cotaInferior += cotaInferiorAux;
-	}
-}
-
-void getMinMaxCVj(vector<vector<tuple<CTrack*, double>>>& visitsTracksMat, double& min, double& max,int j) 
+void getMinMaxCVj(vector<vector<tuple<CTrack*, double>>>& visitsTracksMat, double& min, double& max, int j)
 {
 	max = 0;
 	min = numeric_limits<double>::max();
 
 	for (int i = 0; i < visitsTracksMat.size() - 1; i++)
 	{
-		if (i == j)
-			continue;
+		// Si es del mateix al mateix node, no tenir en compte.
+		if (i == j) continue;
 
+		// Si es del primer a l'ultim node, no tenir en compte.
+		if (i == 0 && j == visitsTracksMat.size() - 1) continue;
+
+		// Trobar maxims i minims de columnes.
 		double distance = get<1>(visitsTracksMat[i][j]);
 		if (distance > max) max = distance;
 		if (distance < min) min = distance;
@@ -138,83 +126,99 @@ void getMinMaxCVj(vector<vector<tuple<CTrack*, double>>>& visitsTracksMat, doubl
 
 CTrack SalesmanTrackBranchAndBound2(CGraph& graph, CVisits &visits)
 {
-	// Llista per guardar el cami mes curt i la longitud.
+	// Llista per guardar el cami mes curt i la seva longitud.
 	list<int> camiMesCurt;
 	double longitudCamiMesCurt = numeric_limits<double>::max();
 	double cotaSuperiorMinima = numeric_limits<double>::max();
 
 	// Guardar en un array de dues dimensions tots els camins òptims entre vèrtexs a visitar.
 	vector<vector<tuple<CTrack*, double>>> visitsTracksMat(visits.GetNVertices(), vector<tuple<CTrack*, double>>(visits.GetNVertices(), { 0, 0 }));
-	list<int> visitsIndex;
+	set<int> visitsIndex;
 	createVisitsTracksMatrix(visitsTracksMat, visitsIndex, graph, visits);
 	
-	visitsIndex.pop_front();
-	CBB2 nodeStart(0, 0);
-	for (int v : visitsIndex) nodeStart.m_ToVisit.insert(v);
-	double cotaSuperior, cotaInferior;
-	getInitialMaxMinCVi(visitsTracksMat, cotaSuperior, cotaInferior, nodeStart.m_ToVisit);
+	// Calcular cotes i nodes a visitar per al node inicial.
+	visitsIndex.erase(visitsIndex.begin());
+	CBB2 nodeStart(0, 0, visitsIndex);
+	double cotaSuperior = 0.0, cotaInferior = 0.0;
+	for (int j : nodeStart.m_ToVisit)
+	{
+		double max, min;
+		getMinMaxCVj(visitsTracksMat, min, max, j);
+
+		cotaSuperior += max;
+		cotaInferior += min;
+	}
 	nodeStart.m_CotaInferior = cotaInferior;
 	nodeStart.m_CotaSuperior = cotaSuperior;
-	if (cotaSuperior < cotaSuperiorMinima) cotaSuperiorMinima = cotaSuperior;
+	if (cotaSuperior < cotaSuperiorMinima && cotaSuperior > 0) cotaSuperiorMinima = cotaSuperior;
 
+	// Afegir node inicial a la cua.
 	priority_queue<CBB2*, std::vector<CBB2*>, comparatorCBB2> queue;
 	queue.push(&nodeStart);
 
 	while (!queue.empty())
 	{
+		// Treure de la cua el node amb la cota minima mes baixa.
 		CBB2* pN = queue.top();
 		queue.pop();
 
+		// Si hem trobat una solucio millor al node amb la cota inferior mes baixa de la cua, no cal continuar.
+		if (pN->m_CotaInferior > cotaSuperiorMinima + 1e-5 || pN->m_CotaInferior > longitudCamiMesCurt + 1e-5) 
+			break;
+
 		for (int v : pN->m_ToVisit) 
 		{
-			if (pN->m_ToVisit.size() > 1 && v == visits.GetNVertices() - 1)
+			// Si es la darrera visita i encara no hem visitat totes les anteriors, podar.
+			if (pN->m_ToVisit.size() > 1 && v == visits.GetNVertices() - 1) continue;
+
+			// Podar si la longitud actual es superior a la del cami mes curt trobat fins ara.
+			if (pN->m_Length + get<1>(visitsTracksMat[pN->m_Visita][v]) > longitudCamiMesCurt) continue;
+
+			// Si es solucio, actualitzar longitud cami mes curt i llista de visites que conformen el cami mes curt.
+			if (v == visits.m_Vertices.size() - 1)
+			{
+				CBB2* pAnterior = pN;
+				camiMesCurt.clear();
+				camiMesCurt.push_front(v);
+				while (pAnterior) {
+					camiMesCurt.push_front(pAnterior->m_Visita);
+					pAnterior = pAnterior->m_pFather;
+				}
+				longitudCamiMesCurt = pN->m_Length + get<1>(visitsTracksMat[pN->m_Visita][v]);
 				continue;
+			}
 
 			// Calcular cotes inferiors i superiors.
 			double minCVj, maxCVj;
 			getMinMaxCVj(visitsTracksMat, minCVj, maxCVj, v);
-			cotaSuperior = pN->m_CotaSuperior - maxCVj + get<1>(visitsTracksMat[pN->m_Visita][v]) + 1e-5;
+			cotaSuperior = pN->m_CotaSuperior - maxCVj + get<1>(visitsTracksMat[pN->m_Visita][v]);
 			cotaInferior = pN->m_CotaInferior - minCVj + get<1>(visitsTracksMat[pN->m_Visita][v]);
 			if (cotaSuperior < cotaSuperiorMinima) cotaSuperiorMinima = cotaSuperior;
 
-			// Si cal podar per cota saltar-se node.
-			if (cotaInferior > cotaSuperiorMinima)
-				continue;
-			
+			// Podar si la cota inferior es superior a la cota superior minima o si la cota inferior es superior a la longitud del cami mes curt.
+			if (cotaInferior > cotaSuperiorMinima + 1e-5 || cotaInferior > longitudCamiMesCurt) continue;
+
 			// Crear nova instancia de node CBB2.
 			CBB2* nodeFill = new CBB2(pN, v, get<1>(visitsTracksMat[pN->m_Visita][v]));
 			nodeFill->m_CotaInferior = cotaInferior;
 			nodeFill->m_CotaSuperior = cotaSuperior;
 
-			// Podar si la longitud actual es superior a la del cami mes curt trobat fins ara.
-			if (nodeFill->m_Length > longitudCamiMesCurt) {
-				nodeFill->Unlink();
-				continue;
-			}
-
 			// Afegir node a la cua.
 			queue.push(nodeFill);
-
-			// Si es solucio, actualitzar longitud cami mes curt i llista de camiMesCurt.
-			if (v == visits.m_Vertices.size() - 1)
-			{
-				CBB2* pAnterior = nodeFill;
-				camiMesCurt.clear();
-				while (pAnterior) {
-					camiMesCurt.push_front(pAnterior->m_Visita);
-					pAnterior = pAnterior->m_pFather;
-				}
-				longitudCamiMesCurt = nodeFill->m_Length;
-			}
 		}
-		// pN->Unlink();
+
+		// Allibera memoria.
+		// if (pN->m_Visita != nodeStart.m_Visita) pN->Unlink();
 	}
 
+	// Allibera memoria restant.
+	/*
 	while (!queue.empty()) {
 		CBB2* pS = queue.top();
 		queue.pop();
 		pS->Unlink();
 	}
+	*/
 	
 	// Crear el track a partir del cami d'indexos mes curt.
 	CTrack resultTrack(&graph);
