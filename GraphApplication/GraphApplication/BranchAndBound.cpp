@@ -6,6 +6,41 @@
 #include <tuple> 
 #include <set>
 
+// Funcions generals ==============================================================
+void createVisitsTracksMatrix(vector<vector<tuple<CTrack*, double>>>& visitsTracksMat, set<int>& visitsIndex, CGraph& graph, CVisits& visits)
+{
+	for (auto it_i = begin(visits.m_Vertices); it_i != end(visits.m_Vertices); it_i++)
+	{
+		visitsIndex.insert(distance(visits.m_Vertices.begin(), it_i));
+		DijkstraQueue(graph, *it_i);
+
+		for (auto it_j = begin(visits.m_Vertices); it_j != end(visits.m_Vertices); it_j++) {
+
+			CTrack* track = new CTrack(&graph);
+			CVertex* pV = (*it_j);
+			while (pV->m_Name != (*it_i)->m_Name) {
+				track->AddFirst(pV->m_pDijkstraPrevious);
+				pV = pV->m_pDijkstraPrevious->m_pOrigin;
+			}
+
+			if ((*it_i)->m_Name != (*it_j)->m_Name) {
+				visitsTracksMat[distance(visits.m_Vertices.begin(), it_i)][distance(visits.m_Vertices.begin(), it_j)] = { track, track->Length() };
+			}
+		}
+	}
+}
+
+void createResultTrack(vector<vector<tuple<CTrack*, double>>>& visitsTracksMat, CTrack& resultTrack, list<int>& camiMesCurt)
+{
+	int dest = camiMesCurt.front();
+	camiMesCurt.erase(camiMesCurt.begin());
+	for (int orig : camiMesCurt) {
+		CTrack* t = get<0>(visitsTracksMat[dest][orig]);
+		resultTrack.Append(*t);
+		dest = orig;
+	}
+}
+
 
 // SalesmanTrackBranchAndBound1 ===================================================
 CTrack SalesmanTrackBranchAndBound1(CGraph& graph, CVisits& visits)
@@ -70,60 +105,6 @@ struct comparatorCBB2 {
 	}
 };
 
-void createVisitsTracksMatrix(vector<vector<tuple<CTrack*, double>>>& visitsTracksMat, set<int>& visitsIndex, CGraph& graph, CVisits& visits)
-{
-	for (auto it_i = begin(visits.m_Vertices); it_i != end(visits.m_Vertices); it_i++)
-	{
-		visitsIndex.insert(distance(visits.m_Vertices.begin(), it_i));
-		DijkstraQueue(graph, *it_i);
-
-		for (auto it_j = begin(visits.m_Vertices); it_j != end(visits.m_Vertices); it_j++) {
-
-			CTrack* track = new CTrack(&graph);
-			CVertex* pV = (*it_j);
-			while (pV->m_Name != (*it_i)->m_Name) {
-				track->AddFirst(pV->m_pDijkstraPrevious);
-				pV = pV->m_pDijkstraPrevious->m_pOrigin;
-			}
-
-			if ((*it_i)->m_Name != (*it_j)->m_Name) {
-				visitsTracksMat[distance(visits.m_Vertices.begin(), it_i)][distance(visits.m_Vertices.begin(), it_j)] = { track, track->Length() };
-			}
-		}
-	}
-}
-
-void createResultTrack(vector<vector<tuple<CTrack*, double>>>& visitsTracksMat, CTrack& resultTrack, list<int>& camiMesCurt)
-{
-	int dest = camiMesCurt.front();
-	camiMesCurt.erase(camiMesCurt.begin());
-	for (int orig : camiMesCurt) {
-		CTrack* t = get<0>(visitsTracksMat[dest][orig]);
-		resultTrack.Append(*t);
-		dest = orig;
-	}
-}
-
-void getMinMaxCVj(vector<vector<tuple<CTrack*, double>>>& visitsTracksMat, double& min, double& max, int j)
-{
-	max = 0;
-	min = numeric_limits<double>::max();
-
-	for (int i = 0; i < visitsTracksMat.size() - 1; i++)
-	{
-		// Si es del mateix al mateix node, no tenir en compte.
-		if (i == j) continue;
-
-		// Si es del primer a l'ultim node, no tenir en compte.
-		if (i == 0 && j == visitsTracksMat.size() - 1) continue;
-
-		// Trobar maxims i minims de columnes.
-		double distance = get<1>(visitsTracksMat[i][j]);
-		if (distance > max) max = distance;
-		if (distance < min) min = distance;
-	}
-}
-
 CTrack SalesmanTrackBranchAndBound2(CGraph& graph, CVisits &visits)
 {
 	// Llista per guardar el cami mes curt i la seva longitud.
@@ -132,21 +113,36 @@ CTrack SalesmanTrackBranchAndBound2(CGraph& graph, CVisits &visits)
 	double cotaSuperiorMinima = numeric_limits<double>::max();
 
 	// Guardar en un array de dues dimensions tots els camins òptims entre vèrtexs a visitar.
-	vector<vector<tuple<CTrack*, double>>> visitsTracksMat(visits.GetNVertices(), vector<tuple<CTrack*, double>>(visits.GetNVertices(), { 0, 0 }));
+	vector<vector<tuple<CTrack*, double>>> visitsTracksMat(visits.GetNVertices(), vector<tuple<CTrack*, double>>(visits.GetNVertices(), { 0, -1 }));
 	set<int> visitsIndex;
 	createVisitsTracksMatrix(visitsTracksMat, visitsIndex, graph, visits);
 	
+	// Precalcular minMaxCVj
+	vector<tuple<double, double >> minMaxCVj(visits.GetNVertices(), tuple<double, double>(numeric_limits<double>::max(), 0));
+	for (int j = 0; j < visitsTracksMat.size(); j++)
+	{
+		for (int i = 0; i < visitsTracksMat.size() - 1; i++)
+		{
+			// Si es del mateix al mateix node, no tenir en compte.
+			if (i == j) continue;
+
+			// Si es del primer a l'ultim node, no tenir en compte.
+			if (i == 0 && j == visitsTracksMat.size() - 1) continue;
+
+			// Ajustar valors per a CVj.
+			if (get<1>(visitsTracksMat[i][j]) > get<1>(minMaxCVj[j])) get<1>(minMaxCVj[j]) = get<1>(visitsTracksMat[i][j]);
+			if (get<1>(visitsTracksMat[i][j]) < get<0>(minMaxCVj[j])) get<0>(minMaxCVj[j]) = get<1>(visitsTracksMat[i][j]);
+		}
+	}
+
 	// Calcular cotes i nodes a visitar per al node inicial.
 	visitsIndex.erase(visitsIndex.begin());
 	CBB2 nodeStart(0, 0, visitsIndex);
 	double cotaSuperior = 0.0, cotaInferior = 0.0;
 	for (int j : nodeStart.m_ToVisit)
 	{
-		double max, min;
-		getMinMaxCVj(visitsTracksMat, min, max, j);
-
-		cotaSuperior += max;
-		cotaInferior += min;
+		cotaSuperior += get<1>(minMaxCVj[j]);
+		cotaInferior += get<0>(minMaxCVj[j]);
 	}
 	nodeStart.m_CotaInferior = cotaInferior;
 	nodeStart.m_CotaSuperior = cotaSuperior;
@@ -189,10 +185,8 @@ CTrack SalesmanTrackBranchAndBound2(CGraph& graph, CVisits &visits)
 			}
 
 			// Calcular cotes inferiors i superiors.
-			double minCVj, maxCVj;
-			getMinMaxCVj(visitsTracksMat, minCVj, maxCVj, v);
-			cotaSuperior = pN->m_CotaSuperior - maxCVj + get<1>(visitsTracksMat[pN->m_Visita][v]);
-			cotaInferior = pN->m_CotaInferior - minCVj + get<1>(visitsTracksMat[pN->m_Visita][v]);
+			cotaSuperior = pN->m_CotaSuperior - get<1>(minMaxCVj[v]) + get<1>(visitsTracksMat[pN->m_Visita][v]);
+			cotaInferior = pN->m_CotaInferior - get<0>(minMaxCVj[v]) + get<1>(visitsTracksMat[pN->m_Visita][v]);
 			if (cotaSuperior < cotaSuperiorMinima) cotaSuperiorMinima = cotaSuperior;
 
 			// Podar si la cota inferior es superior a la cota superior minima o si la cota inferior es superior a la longitud del cami mes curt.
