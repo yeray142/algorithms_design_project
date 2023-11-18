@@ -43,9 +43,101 @@ void createResultTrack(vector<vector<tuple<CTrack*, double>>>& visitsTracksMat, 
 
 
 // SalesmanTrackBranchAndBound1 ===================================================
-CTrack SalesmanTrackBranchAndBound1(CGraph& graph, CVisits& visits)
-{
-	return CTrack(&graph);
+class CBB1 {
+public:
+	CBB1* m_pFatherBB1;
+	int m_VisitaBB1;
+	double m_LengthBB1;
+
+	// Llista vertex a visitar
+	set<int> m_ToVisitBB1;
+
+	// Constructor vertex inicial
+	CBB1(int visita, double length, set<int>& toVisit)
+		: m_pFatherBB1(nullptr)
+		, m_LengthBB1(length)
+		, m_VisitaBB1(visita)
+		, m_ToVisitBB1(toVisit)
+	{
+	}
+
+	// Constructor resta de vertexs
+	CBB1(CBB1* pFather, int visita, double length)
+		: m_pFatherBB1(pFather)
+		, m_VisitaBB1(visita)
+		, m_LengthBB1(pFather->m_LengthBB1 + length)
+	{
+		m_ToVisitBB1 = pFather->m_ToVisitBB1;
+		m_ToVisitBB1.erase(visita);
+	}
+};
+
+struct comparatorCBB1 {
+	bool operator()(const CBB1* s1, const CBB1* s2) {
+		return s1->m_LengthBB1 > s2->m_LengthBB1;
+	}
+};
+
+CTrack SalesmanTrackBranchAndBound1(CGraph& graph, CVisits& visits) {
+	// Llista per guardar el cami mes curt i la seva longitud
+	list<int> camiMesCurtBB1;
+	double longitudCamiMesCurtBB1 = numeric_limits<double>::max();
+
+	// Guarda en un array 2D tots els camins óptims entre vertexs a visitar
+	vector<vector<tuple<CTrack*, double>>> visitsTracksMat(visits.GetNVertices(), vector<tuple<CTrack*, double>>(visits.GetNVertices(), { 0, -1 }));
+	set<int> visitsIndex;
+	createVisitsTracksMatrix(visitsTracksMat, visitsIndex, graph, visits);
+
+	// Calcula cotes i nodes a visitar pel node inicial
+	visitsIndex.erase(visitsIndex.begin());
+	CBB1 nodeStart(0, 0, visitsIndex);
+
+	// Afegeix node inicial a la cua de prioritat
+	priority_queue<CBB1*, vector<CBB1*>, comparatorCBB1> queue;
+	queue.push(&nodeStart);
+
+	while (!queue.empty()) {
+		// Treu de la cua el node amb la longitud mínima
+		CBB1* pN = queue.top();
+		queue.pop();
+
+		for (int v : pN->m_ToVisitBB1) {
+			// Si es la última visita i no ha visitat totes les anteriors, poda
+			if (pN->m_ToVisitBB1.size() > 1 && v == visits.GetNVertices() - 1) {
+				continue;
+			}
+
+			// Poda si la longitud actual es superior a la del cami mes curt trobat
+			if (pN->m_LengthBB1 + get<1>(visitsTracksMat[pN->m_VisitaBB1][v]) > longitudCamiMesCurtBB1) {
+				continue;
+			}
+
+			// Si es solució, actualiza longitud de cami mes curt i la seva llista de visites 
+			if (v == visits.m_Vertices.size() - 1) {
+				CBB1* pAnterior = pN;
+				camiMesCurtBB1.clear();
+				camiMesCurtBB1.push_front(v);
+				while (pAnterior) {
+					camiMesCurtBB1.push_front(pAnterior->m_VisitaBB1);
+					pAnterior = pAnterior->m_pFatherBB1;
+				}
+				longitudCamiMesCurtBB1 = pN->m_LengthBB1 + get<1>(visitsTracksMat[pN->m_VisitaBB1][v]);
+				continue;
+			}
+
+			// Crea nou CBB1
+			CBB1* nodeFill = new CBB1(pN, v, get<1>(visitsTracksMat[pN->m_VisitaBB1][v]));
+
+			// Afegeix node a la cua de prioritat
+			queue.push(nodeFill);
+		}
+	}
+
+	// Crea el track a partir del resultat trobat
+	CTrack resultTrackBB1(&graph);
+	createResultTrack(visitsTracksMat, resultTrackBB1, camiMesCurtBB1);
+
+	return resultTrackBB1;
 }
 
 
