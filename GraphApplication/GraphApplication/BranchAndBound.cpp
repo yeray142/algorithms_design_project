@@ -221,9 +221,153 @@ CTrack SalesmanTrackBranchAndBound2(CGraph& graph, CVisits &visits)
 	return resultTrack;
 }
 
-
 // SalesmanTrackBranchAndBound3 ===================================================
+void minMaxCota(double &min, double &max, vector<vector<tuple<CTrack*, double>>> &visitsTracksMat, CBB2* node)
+{
+	min = 0.0;
+	max = 0.0;
+
+	for (int j : node->m_ToVisit) 
+	{
+		double minAux = numeric_limits<double>::max();
+		double maxAux = 0.0;
+
+		for (int i : node->m_ToVisit)
+		{
+			// Si i es l'ultim node, no tenir en compte.
+			if (i == visitsTracksMat.size() - 1) continue;
+
+			// Si es del mateix al mateix node, no tenir en compte.
+			if (i == j) continue;
+
+			// Si es del primer a l'ultim node, no tenir en compte.
+			if (i == 0 && j == visitsTracksMat.size() - 1) continue;
+
+			// Trobar maxims i minims de columnes.
+			double distance = get<1>(visitsTracksMat[i][j]);
+			if (distance > maxAux) maxAux = distance;
+			if (distance < minAux) minAux = distance;
+		}
+
+		// Sumar del node actual als nodes futurs.
+		if (node->m_ToVisit.size() > 1) 
+		{
+			if (j != visitsTracksMat.size() - 1) {
+				double distance = get<1>(visitsTracksMat[node->m_Visita][j]);
+				if (distance > maxAux) maxAux = distance;
+				if (distance < minAux) minAux = distance;
+			}
+		}
+		else {
+			double distance = get<1>(visitsTracksMat[node->m_Visita][j]);
+			if (distance > maxAux) maxAux = distance;
+			if (distance < minAux) minAux = distance;
+		}
+
+
+		min += minAux;
+		max += maxAux;
+	}
+}
+
+
 CTrack SalesmanTrackBranchAndBound3(CGraph& graph, CVisits &visits)
 {
-	return CTrack(&graph);
+	// Llista per guardar el cami mes curt i la seva longitud.
+	list<int> camiMesCurt;
+	double longitudCamiMesCurt = numeric_limits<double>::max();
+	double cotaSuperiorMinima = numeric_limits<double>::max();
+
+	// Guardar en un array de dues dimensions tots els camins òptims entre vèrtexs a visitar.
+	vector<vector<tuple<CTrack*, double>>> visitsTracksMat(visits.GetNVertices(), vector<tuple<CTrack*, double>>(visits.GetNVertices(), { 0, -1 }));
+	set<int> visitsIndex;
+	createVisitsTracksMatrix(visitsTracksMat, visitsIndex, graph, visits);
+
+	// Calcular cotes i nodes a visitar per al node inicial.
+	visitsIndex.erase(visitsIndex.begin());
+	CBB2 nodeStart(0, 0, visitsIndex);
+	double cotaSuperior = 0.0, cotaInferior = 0.0;
+	minMaxCota(cotaInferior, cotaSuperior, visitsTracksMat, &nodeStart);
+	nodeStart.m_CotaInferior = cotaInferior;
+	nodeStart.m_CotaSuperior = cotaSuperior;
+	if (cotaSuperior < cotaSuperiorMinima && cotaSuperior > 0) cotaSuperiorMinima = cotaSuperior;
+
+	// Afegir node inicial a la cua.
+	priority_queue<CBB2*, std::vector<CBB2*>, comparatorCBB2> queue;
+	queue.push(&nodeStart);
+
+	while (!queue.empty())
+	{
+		// Treure de la cua el node amb la cota minima mes baixa.
+		CBB2* pN = queue.top();
+		queue.pop();
+
+		// Si hem trobat una solucio millor al node amb la cota inferior mes baixa de la cua, no cal continuar.
+		if (pN->m_CotaInferior > cotaSuperiorMinima + 1e-5 || pN->m_CotaInferior > longitudCamiMesCurt + 1e-5) 
+			break;
+
+		for (int v : pN->m_ToVisit) 
+		{
+			// Si es la darrera visita i encara no hem visitat totes les anteriors, podar.
+			if (pN->m_ToVisit.size() > 1 && v == visits.GetNVertices() - 1) continue;
+
+			// Podar si la longitud actual es superior a la del cami mes curt trobat fins ara.
+			if (pN->m_Length + get<1>(visitsTracksMat[pN->m_Visita][v]) > longitudCamiMesCurt) continue;
+
+			// Si es solucio, actualitzar longitud cami mes curt i llista de visites que conformen el cami mes curt.
+			if (v == visits.m_Vertices.size() - 1)
+			{
+				CBB2* pAnterior = pN;
+				camiMesCurt.clear();
+				camiMesCurt.push_front(v);
+				while (pAnterior) {
+					camiMesCurt.push_front(pAnterior->m_Visita);
+					pAnterior = pAnterior->m_pFather;
+				}
+				longitudCamiMesCurt = pN->m_Length + get<1>(visitsTracksMat[pN->m_Visita][v]);
+				continue;
+			}
+
+
+			// Crear nova instancia de node CBB2.
+			CBB2* nodeFill = new CBB2(pN, v, get<1>(visitsTracksMat[pN->m_Visita][v]));
+
+			// Calcular cotes inferiors i superiors.
+			double min, max;
+			minMaxCota(min, max, visitsTracksMat, nodeFill);
+			cotaSuperior = nodeFill->m_Length + max;
+			cotaInferior = nodeFill->m_Length + min;
+			if (cotaSuperior < cotaSuperiorMinima) cotaSuperiorMinima = cotaSuperior;
+
+			nodeFill->m_CotaInferior = cotaInferior;
+			nodeFill->m_CotaSuperior = cotaSuperior;
+
+			// Podar si la cota inferior es superior a la cota superior minima o si la cota inferior es superior a la longitud del cami mes curt.
+			if (cotaInferior > cotaSuperiorMinima + 1e-5 || cotaInferior > longitudCamiMesCurt) {
+				// nodeFill->Unlink();
+				continue;
+			}
+
+			// Afegir node a la cua.
+			queue.push(nodeFill);
+		}
+
+		// Allibera memoria.
+		// if (pN->m_Visita != nodeStart.m_Visita) pN->Unlink();
+	}
+
+	// Allibera memoria restant.
+	/*
+	while (!queue.empty()) {
+		CBB2* pS = queue.top();
+		queue.pop();
+		pS->Unlink();
+	}
+	*/
+	
+	// Crear el track a partir del cami d'indexos mes curt.
+	CTrack resultTrack(&graph);
+	createResultTrack(visitsTracksMat, resultTrack, camiMesCurt);
+
+	return resultTrack;
 }
